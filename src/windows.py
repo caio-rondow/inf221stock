@@ -23,37 +23,9 @@ class StartPage(Win):
         # BOTÕES
         button1=Button(self, text="Funcionário", width=20, height=5,command=lambda: master.forward(MenuFunc))
         button2=Button(self, text="Nutricionista", width=20, height=5,command=lambda: master.forward(MenuNutri))
-        button3=Button(self, text="login layout",width=20, height=5,command=lambda: master.forward(Login))
         button1.place(relx=0.25, rely=0.5, anchor='e')
         button2.place(relx=0.5, rely=0.5, anchor='center')
-        button3.place(relx=0.75, rely=0.5, anchor='w')
         
-class Login(Win):
-    def __init__(self, master):
-        super().__init__(master)
-
-        # BORDA
-        lframe=LabelFrame(self,width=winW//3,height=winH//3, background='#ADABAB')
-        lframe.place(relx=0.5, rely=0.5, anchor='center')
-
-        # INPUT BARRA DE PESQUISA
-        username=Entry(self,width=25,borderwidth=4)
-        password=Entry(self,width=25, borderwidth=4)
-        username.place(relx=0.5,rely=0.40,anchor='center')
-        password.place(relx=0.5,rely=0.55,anchor='center')
-        
-        usernameLabel=Label(self,text="Login",font=('Arial',12),background='#ADABAB')
-        passwordLabel=Label(self,text="Senha",font=('Arial',12),background='#ADABAB')
-        usernameLabel.place(relx=0.5,rely=0.36,anchor='center')
-        passwordLabel.place(relx=0.5,rely=0.51,anchor='center')
-
-        # BOTÕES
-        button=Button(self, text="Voltar",command=lambda:master.backward())
-
-
-        # --- Place Botões
-        button.place(x=winW-100,y=winH-100)
-
 #   ========== FUNC. WINDOWS ==========
 class MenuFunc(Win):
     def __init__(self, master):
