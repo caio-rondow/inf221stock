@@ -8,12 +8,7 @@ class WindowController(Tk):
 
         self.__root=Stack()
         self.__frame=None
-    
-    def openMenuNutri(self):
-        self.forward(win.MenuNutri)
-    
-    def openMenuFunc(self):
-        self.forward(win.MenuFunc)
+        self.forward(win.FirstPage)
 
     def forward(self,next):
         newFrame=next(self)
