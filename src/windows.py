@@ -2,6 +2,7 @@ from calendar import c
 from src.include.winController import *
 from tkinter import *
 import time
+import mysql.connector
 import sqlite3
 import os
 from PIL import ImageTk, Image
@@ -48,31 +49,41 @@ class LoginPage(Win):
         self.password_login_entry = Entry(self, textvariable=self.password_verify, show= '*')
         self.password_login_entry.pack()
         Label(self, text="", bg='lightblue').pack()
-        Button(self, text="Login", bg='orange', width=10, height=1, command = self.login_verify).pack()
+        Button(self, text="Login", bg='#4CBB17', width=10, height=1, command = self.login_verify).pack()
         Button(self, text="Voltar", bg='white', width=10, height=1, command=lambda:master.backward()).place(x=winW-100,y=winH-100)
 
     def login_verify(self):
-        username1 = self.username_verify.get()
-        password1 = self.password_verify.get()
+        username_input = self.username_verify.get()
+        password_input = self.password_verify.get()
         self.username_login_entry.delete(0, END)
         self.password_login_entry.delete(0, END)
-    
-        list_of_files = os.listdir()
- 
-        if username1 in list_of_files:
-            file1 = open(username1, "r")
-            verify = file1.read().splitlines()
 
-            if password1 == verify[2]:
-                if verify[1] == 'Nutricionista':
-                    self.master.forward(MenuNutri)
-                else: self.master.forward(MenuFunc)
-                    
-            else:
-                Label(self, text="Senha incorreta. Por favor, tente novamente.", bg='lightblue').pack()
+        mydb = mysql.connector.connect(
+            host = "localhost",
+            user = "root",
+            password = "asp254kj",
+            database = "db"
+        )
         
-        else:
+        cursor = mydb.cursor()
+        cursor.execute(f"SELECT * from users where username = '{username_input}';")
+        user = cursor.fetchall() #lista info do usuario
+
+        if len(user) == 0:
             Label(self, text="Usuário não encontrado.", bg='lightblue').pack()
+            return
+
+        if password_input != user[0][2]:
+            Label(self, text="Senha incorreta. Por favor, tente novamente.", bg='lightblue').pack()
+            return
+        
+        if user[0][3] == 'Funcionário':
+            self.master.forward(MenuFunc)
+        elif user[0][3] == 'Nutricionista':
+            self.master.forward(MenuNutri)
+
+        mydb.commit()
+        mydb.close()
 
 class RegisterPage(Win):
     def __init__(self, master):
@@ -106,18 +117,26 @@ class RegisterPage(Win):
         
         if (username_info == '' or password_info == '' or post_info == 'Selecione...'):
             Label(self, text="Por favor, preencha todos os campos.", bg='lightblue', fg="red").pack()
-        else:
-            file = open(username_info, "w")
-            file.write(username_info + "\n")
-            file.write(post_info + "\n")
-            file.write(password_info)
-            file.close()
+            return
+        mydb = mysql.connector.connect(
+            host = "localhost",
+            user = "root",
+            password = "asp254kj",
+            database = "db"
+            )
+        cursor = mydb.cursor()
+        cursor.execute(f"SELECT * from users where username = '{username_info}';")
+        user = cursor.fetchall() #lista info do usuario
 
-            self.username_entry.delete(0, END)
-            self.password_entry.delete(0, END)
-            self.post_entry.set("Selecione...")
-            Label(self, text="Registrado com sucesso", bg='lightblue', fg="green", font=("Verdana", 11)).pack()
-        
+        if len(user) != 0:
+            Label(self, text="Este nome de usuário já está cadastrado.", bg='lightblue').pack()
+            return
+            
+        cursor = mydb.cursor()
+        cursor.execute(f"INSERT INTO Users(Username, Password, Tipo) VALUES('{username_info}', '{password_info}', '{post_info}')")
+        mydb.commit()
+        mydb.close()
+
 #   ========== FUNC. WINDOWS ==========
 class MenuFunc(Win):
     def __init__(self, master):
