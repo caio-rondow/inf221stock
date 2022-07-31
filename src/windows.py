@@ -6,6 +6,7 @@ import mysql.connector
 import sqlite3
 import os
 from PIL import ImageTk, Image
+from tkinter.ttk import Treeview
 
 # ========== DEFAULT WINDOW ==========
 winW=800
@@ -61,7 +62,7 @@ class LoginPage(Win):
         mydb = mysql.connector.connect(
             host = "localhost",
             user = "root",
-            password = "asp254kj",
+            password = "@RoneCachaca2222@",
             database = "db"
         )
         
@@ -121,7 +122,7 @@ class RegisterPage(Win):
         mydb = mysql.connector.connect(
             host = "localhost",
             user = "root",
-            password = "asp254kj",
+            password = "@RoneCachaca2222@",
             database = "db"
             )
         cursor = mydb.cursor()
@@ -177,82 +178,128 @@ class BuscaItemFunc(Win):
         searchBox.insert(0,self.defaultText)
         searchBox.place(x=(winW//4)-190,y=20)
         # BORDA
-        lframe=LabelFrame(self,text="itens",width=winW-150,height=winH-100)
+        lframe=LabelFrame(self,text="ESTOQUE",width=winW-150,height=winH-100)
         lframe.place(x=(winW//4)-190,y=winH-550)
 
         # BOTÕES
         button0=Button(self, text="Adicionar",width=15,height=3,command=lambda:master.forward(AddItemForm))
-        button1=Button(self, text="Remover",width=15,height=3) # Adicionar função de remover item do BD
-        button2=Button(self, text="Buscar",width=8,height=1)  # Adicionar função de buscar item no BD
-        button3=Button(self, text="Voltar",command=lambda:master.backward())
-        query_btn=Button(self,text="Mostrar Estoque",width=15,height=3,command=self.query)
+        button1=Button(self, text="Remover",width=15,height=3,command=lambda:self.remove()) 
+        button2=Button(self, text="Buscar",width=8,height=1,command=lambda:self.search(searchBox))  
+        button3=Button(self, text="Atualizar",width=15, height=3,command=lambda:self.update(self.query()))
+        button4=Button(self, text="Voltar",command=lambda:master.backward())
         # --- Place Botões
         button0.place(x=winW-120,y=winH-540)
         button1.place(x=winW-120,y=winH-480)
         button2.place(x=(winW//2)-80,y=15)
-        button3.place(x=winW-100,y=winH-100)
-        query_btn.place(x=winW-120,y=winH-420)
+        button3.place(x=winW-120,y=winH-420)
+        button4.place(x=winW-100,y=winH-100)
 
-    def query(self):
+        # LIST BOX
+        itemlist=Frame(self)
+        scrollbar=Scrollbar(itemlist,orient=VERTICAL)
+        self.lbQuery=Treeview(itemlist,column=('c1', 'c2', 'c2'),show='headings', height=22, yscrollcommand=scrollbar.set)
+        self.myquery=self.query()
+
+        # LIST BOX HEADINGS
+        self.lbQuery.column("# 1",anchor=CENTER)
+        self.lbQuery.heading('# 1', text='ID')
+        self.lbQuery.column("# 2",anchor=CENTER)
+        self.lbQuery.heading('# 2', text='Ingrediente')
+        self.lbQuery.column("# 3",anchor=CENTER)
+        self.lbQuery.heading('# 3', text='Quantidade')
+
+        # insert into list of itens
+        self.update(self.myquery)
+
+        # --- place listbox
+        scrollbar.config(command=self.lbQuery.yview)
+        scrollbar.pack(side=RIGHT,fill=Y)
+        itemlist.place(x=(winW//4)-180,y=winH-530)
+        self.lbQuery.pack() 
+
+    def remove(self):
+        item=self.lbQuery.selection()
+        for i in item:
+            self.lbQuery.delete(i)
+
+    def update(self,data):
+        self.lbQuery.delete(*self.lbQuery.get_children())
+        for item in data:
+            self.lbQuery.insert('','end',values=item)
+
+    def search(self,data):
+        item='%'+data.get()+'%'
+        
         # Create/Connect to database
-        conn=sqlite3.connect('misc/test.db')
+        conn=mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='@RoneCachaca2222@',
+            database='db'
+        )
         cursor=conn.cursor()
-    
-        cursor.execute("SELECT *, oid FROM addresses")
-        records=cursor.fetchall()
-        rec=''
-        for data in records:
-            for item in data:
-                rec+=str(item)+" "
-            rec+="\n"
+        command="select * from estoque where Ingrediente like %s"
+        values=(item,)
+        cursor.execute(command,values)
+        query=cursor.fetchall()
 
-        # LABELS
-        queryLabel=Label(self,text=rec)
-        queryLabel.place(x=(winW//4)-150,y=winH-530)
+        self.update(query)
+        self.lbQuery.pack()
 
         conn.commit()
         conn.close()
+
+
+    def query(self):
+        # Create/Connect to database
+        conn=mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='@RoneCachaca2222@',
+            database='db'
+        )
+        cursor=conn.cursor()
+    
+        cursor.execute("select * from estoque")
+        query=cursor.fetchall()
+
+        conn.commit()
+        conn.close()
+
+        return query
 
 class AddItemForm(Win):
     def __init__(self, master):
         super().__init__(master)
 
         # Database connection test
-        conn=sqlite3.connect('misc/test.db')
+        conn=mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='@RoneCachaca2222@',
+            database='db'
+        )
+        
         cursor=conn.cursor()
-        cursor.execute("""CREATE TABLE IF NOT EXISTS addresses(
-            first_name text,
-            last_name text,
-            address text,
-            city text,
-            state text
+        cursor.execute("""CREATE TABLE IF NOT EXISTS estoque(
+            ID int,
+            Ingrediente text,
+            Quantidade int
         )""")
         conn.commit()
         conn.close()
         
         # INPUT
-        self.fname=Entry(self,width=30)
-        self.fname.grid(row=0,column=1,padx=20)
-        self.lname=Entry(self,width=30)
-        self.lname.grid(row=1,column=1)
-        self.address=Entry(self,width=30)
-        self.address.grid(row=2,column=1)
-        self.city=Entry(self,width=30)
-        self.city.grid(row=3,column=1)
-        self.state=Entry(self,width=30)
-        self.state.grid(row=4,column=1)
+        self.ingredient=Entry(self,width=30)
+        self.ingredient.grid(row=0,column=1)
+        self.qntd=Entry(self,width=30)
+        self.qntd.grid(row=1,column=1)
 
         # LABELS
-        fnameLabel=Label(self,text="Nome")
-        fnameLabel.grid(row=0,column=0)
-        lnameLabel=Label(self,text="Sobrenome")
-        lnameLabel.grid(row=1,column=0)
-        addressLabel=Label(self,text="Endereço")
-        addressLabel.grid(row=2,column=0)   
-        cityLabel=Label(self,text="Cidade")
-        cityLabel.grid(row=3,column=0)
-        stateLabel=Label(self,text="Estado")
-        stateLabel.grid(row=4,column=0)
+        ingredientLabel=Label(self,text='Ingrediente')
+        qntdLabel=Label(self,text='Quantidade')
+        ingredientLabel.grid(row=0,column=0)
+        qntdLabel.grid(row=1,column=0)
 
         # BOTÕES    
         submit_btn=Button(self,text="Cadastrar item", command=self.submit)
@@ -262,29 +309,46 @@ class AddItemForm(Win):
 
     def submit(self):
         # Create/Connect to database
-        conn=sqlite3.connect('misc/test.db')
+        conn=mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='@RoneCachaca2222@',
+            database='db'
+        )
         cursor=conn.cursor()
 
         # Insert into table
-        cursor.execute("INSERT INTO addresses VALUES (:fname, :lname, :address, :city, :state)",
-                    {
-                        'fname':self.fname.get(),
-                        'lname':self.lname.get(),
-                        'address':self.address.get(),
-                        'city':self.city.get(),
-                        'state':self.state.get()
-                    }
-        )
+        command="insert into estoque(Ingrediente, Quantidade) values(%s,%s)"
+        values=(self.ingredient.get(), self.qntd.get())
+        cursor.execute(command,values)
 
         # clear text boxes
-        self.fname.delete(0,END)
-        self.lname.delete(0,END)
-        self.address.delete(0,END)
-        self.city.delete(0,END)
-        self.state.delete(0,END)
+        self.ingredient.delete(0,END)
+        self.qntd.delete(0,END)
 
         conn.commit()
         conn.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #   ========== NUTRI. WINDOWS ==========
 class MenuNutri(Win):
