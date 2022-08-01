@@ -1,4 +1,6 @@
 from calendar import c
+
+from hamcrest import none
 from src.include.winController import *
 from tkinter import *
 import time
@@ -13,6 +15,12 @@ winW=800
 winH=600
 background="#5A5A5A"
 
+# ========= DB CONFIG ==============
+l_host = "localhost"
+l_user = "root"
+l_pass = "aspl5324"
+l_db = "db"
+
 class Win(Frame):
     def __init__(self,master):
         # default configs
@@ -25,33 +33,23 @@ class Win(Frame):
 class FirstPage(Win):
     def __init__(self, master):
         super().__init__(master)
-        self.configure(bg='lightgreen')
-        Label(self, text="Selecione uma opção: ", bg="lightgreen", width="300", height="2", font=("Calibri", 13)).pack()
-        Label(self, text='', bg='lightgreen').pack()
-        button1=Button(self, text="Login", bg='white', height="2", width="30", command=lambda: master.forward(LoginPage))
-        Label(self, text="", bg='lightgreen').pack()
-        button2=Button(self, text="Registrar", bg='white', height="2", width="30", command=lambda: master.forward(RegisterPage))
-        button1.place(x=winW-700,y=winH-300)
-        button2.place(x=winW-300,y=winH-300)
-
-class LoginPage(Win):
-    def __init__(self, master):
-        super().__init__(master)
-        self.configure(bg='lightblue')
-        Label(self, text="Insira suas credenciais para entrar: ", font=("Verdana", 9), bg='lightblue').pack()
-        Label(self, text="", bg='lightblue').pack()
+        bg ="misc/firstpage.png"
+        self.image=ImageTk.PhotoImage(Image.open(bg))
+        label=Label(self,image=self.image)
+        label.place(anchor='center', relx=0.5, rely=0.5)
+        Label(self, text="Bem-vindo! Faça seu login ou cadastre-se para continuar.", bg='#2ABB9C', font=("Microsoft Sans Serif", 14)).place(x=175, y=10)
         self.username_verify = StringVar()
         self.password_verify = StringVar()
-        Label(self, text="Login * ", bg='lightblue').pack()
+        Label(self, text="Login * ", bg='#2ABB9C', font=("Microsoft Sans Serif", 12)).place(x=40, y=70)
         self.username_login_entry = Entry(self, textvariable=self.username_verify)
-        self.username_login_entry.pack()
-        Label(self, text="", bg='lightblue').pack()
-        Label(self, text="Senha * ", bg='lightblue').pack()
+        self.username_login_entry.place(x=40, y=100)
+        Label(self, text="Senha * ", bg='#2ABB9C', font=("Microsoft Sans Serif", 12)).place(x=40, y=130)
         self.password_login_entry = Entry(self, textvariable=self.password_verify, show= '*')
-        self.password_login_entry.pack()
-        Label(self, text="", bg='lightblue').pack()
-        Button(self, text="Login", bg='#4CBB17', width=10, height=1, command = self.login_verify).pack()
-        Button(self, text="Voltar", bg='white', width=10, height=1, command=lambda:master.backward()).place(x=winW-100,y=winH-100)
+        self.password_login_entry.place(x=40, y=160)
+        button1=Button(self, text="Login", font='Arial', bg='orange', width=10, height=1, command = self.login_verify)
+        button2=Button(self, text="Cadastrar", font='Arial',bg='#0cc93d', height=1, width=10, command=lambda: master.forward(RegisterPage))
+        button1.place(x=winW-750,y=winH-400)
+        button2.place(x=winW-750,y=winH-350)
 
     def login_verify(self):
         username_input = self.username_verify.get()
@@ -60,10 +58,10 @@ class LoginPage(Win):
         self.password_login_entry.delete(0, END)
 
         mydb = mysql.connector.connect(
-            host = "localhost",
-            user = "root",
-            password = "@RoneCachaca2222@",
-            database = "db"
+            host = l_host,
+            user = l_user,
+            password = l_pass,
+            database = l_db
         )
         
         cursor = mydb.cursor()
@@ -71,11 +69,11 @@ class LoginPage(Win):
         user = cursor.fetchall() #lista info do usuario
 
         if len(user) == 0:
-            Label(self, text="Usuário não encontrado.", bg='lightblue').pack()
+            Label(self, text="Usuário não encontrado.", bg='#2ABB9C').place(x=40, y=300)
             return
 
         if password_input != user[0][2]:
-            Label(self, text="Senha incorreta. Por favor, tente novamente.", bg='lightblue').pack()
+            Label(self, text="Senha incorreta. Por favor, tente novamente.", bg='#2ABB9C').place(x=40, y=300)
             return
         
         if user[0][3] == 'Funcionário':
@@ -92,6 +90,7 @@ class RegisterPage(Win):
         self.configure(bg='lightblue')
         self.username = StringVar()
         self.password = StringVar()
+        Label(self, text="", bg='lightblue').pack()
         Label(self, text="Por favor, preencha os dados para registrar: ", font=("Verdana", 9), bg="lightblue").pack()
         Label(self, text="", bg='lightblue').pack()
         self.username_lable = Label(self, text="Login * ", bg='lightblue')
@@ -120,10 +119,10 @@ class RegisterPage(Win):
             Label(self, text="Por favor, preencha todos os campos.", bg='lightblue', fg="red").pack()
             return
         mydb = mysql.connector.connect(
-            host = "localhost",
-            user = "root",
-            password = "@RoneCachaca2222@",
-            database = "db"
+            host = l_host,
+            user = l_user,
+            password = l_pass,
+            database = l_db
             )
         cursor = mydb.cursor()
         cursor.execute(f"SELECT * from users where username = '{username_info}';")
@@ -135,6 +134,7 @@ class RegisterPage(Win):
             
         cursor = mydb.cursor()
         cursor.execute(f"INSERT INTO Users(Username, Password, Tipo) VALUES('{username_info}', '{password_info}', '{post_info}')")
+        Label(self, text="Registrado com sucesso.", fg='green', font=("Verdana", 12), bg='lightblue',).pack()
         mydb.commit()
         mydb.close()
 
@@ -232,10 +232,10 @@ class BuscaItemFunc(Win):
         
         # Create/Connect to database
         conn=mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='@RoneCachaca2222@',
-            database='db'
+            host = l_host,
+            user = l_user,
+            password = l_pass,
+            database = l_db
         )
         cursor=conn.cursor()
         command="select * from estoque where Ingrediente like %s"
@@ -253,10 +253,10 @@ class BuscaItemFunc(Win):
     def query(self):
         # Create/Connect to database
         conn=mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='@RoneCachaca2222@',
-            database='db'
+            host = l_host,
+            user = l_user,
+            password = l_pass,
+            database = l_db
         )
         cursor=conn.cursor()
     
@@ -274,10 +274,10 @@ class AddItemForm(Win):
 
         # Database connection test
         conn=mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='@RoneCachaca2222@',
-            database='db'
+            host = l_host,
+            user = l_user,
+            password = l_pass,
+            database = l_db
         )
         
         cursor=conn.cursor()
@@ -310,10 +310,10 @@ class AddItemForm(Win):
     def submit(self):
         # Create/Connect to database
         conn=mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='@RoneCachaca2222@',
-            database='db'
+            host = l_host,
+            user = l_user,
+            password = l_pass,
+            database = l_db
         )
         cursor=conn.cursor()
 
