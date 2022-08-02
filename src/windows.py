@@ -18,7 +18,7 @@ background="#5A5A5A"
 # ========= DB CONFIG ==============
 l_host = "localhost"
 l_user = "root"
-l_pass = "aspl5324"
+l_pass = "aspl5423"
 l_db = "db"
 
 class Win(Frame):
@@ -28,6 +28,7 @@ class Win(Frame):
         master.geometry(str(winW)+"x"+str(winH))
         master.title("Sistema de Estoque RU")
         master.resizable(False, False)
+        master.iconbitmap(r"misc/favicon.ico")
         self.pack_propagate(0)
 
 class FirstPage(Win):
@@ -40,23 +41,24 @@ class FirstPage(Win):
         Label(self, text="Bem-vindo! Faça seu login ou cadastre-se para continuar.", bg='#2ABB9C', font=("Microsoft Sans Serif", 14)).place(x=175, y=10)
         self.username_verify = StringVar()
         self.password_verify = StringVar()
-        Label(self, text="Login * ", bg='#2ABB9C', font=("Microsoft Sans Serif", 12)).place(x=40, y=70)
+        Label(self, text="Usuário * ", bg='#2ABB9C', font=("Microsoft Sans Serif", 12)).place(x=40, y=70)
         self.username_login_entry = Entry(self, textvariable=self.username_verify)
         self.username_login_entry.place(x=40, y=100)
         Label(self, text="Senha * ", bg='#2ABB9C', font=("Microsoft Sans Serif", 12)).place(x=40, y=130)
         self.password_login_entry = Entry(self, textvariable=self.password_verify, show= '*')
         self.password_login_entry.place(x=40, y=160)
-        button1=Button(self, text="Login", font='Arial', bg='orange', width=10, height=1, command = self.login_verify)
-        button2=Button(self, text="Cadastrar", font='Arial',bg='#0cc93d', height=1, width=10, command=lambda: master.forward(RegisterPage))
+        button1=Button(self, text="Login", font='Arial', bg='#0cc93d', width=10, height=1, command = self.login_verify)
+        self.password_login_entry.bind("<Return>", self.login_verify)
+        button2=Button(self, text="Cadastrar", font='Arial',bg='orange', height=1, width=10, command=lambda: master.forward(RegisterPage))
         button1.place(x=winW-750,y=winH-400)
         button2.place(x=winW-750,y=winH-350)
-
-    def login_verify(self):
+        
+    def login_verify(self, event=None):
         username_input = self.username_verify.get()
         password_input = self.password_verify.get()
         self.username_login_entry.delete(0, END)
         self.password_login_entry.delete(0, END)
-
+        
         mydb = mysql.connector.connect(
             host = l_host,
             user = l_user,
@@ -87,26 +89,26 @@ class FirstPage(Win):
 class RegisterPage(Win):
     def __init__(self, master):
         super().__init__(master)
-        self.configure(bg='lightblue')
+        self.configure(bg='#0d6282')
         self.username = StringVar()
         self.password = StringVar()
-        Label(self, text="", bg='lightblue').pack()
-        Label(self, text="Por favor, preencha os dados para registrar: ", font=("Verdana", 9), bg="lightblue").pack()
-        Label(self, text="", bg='lightblue').pack()
-        self.username_lable = Label(self, text="Login * ", bg='lightblue')
+        Label(self, text="", bg='#0d6282').pack()
+        Label(self, text="Por favor, preencha os dados para registrar: ", fg='white',font=("Verdana", 9), bg="#0d6282").pack()
+        Label(self, text="", bg='#0d6282').pack()
+        self.username_lable = Label(self, fg='white', text="Usuário * ", bg='#0d6282')
         self.username_lable.pack()
         self.username_entry = Entry(self, textvariable=self.username)
         self.username_entry.pack()
-        self.password_lable = Label(self, text="Senha * ", bg='lightblue')
+        self.password_lable = Label(self, fg='white', text="Senha * ", bg='#0d6282')
         self.password_lable.pack()
         self.password_entry = Entry(self, textvariable=self.password, show='*')
         self.password_entry.pack()
         self.post_entry = StringVar(self)
         self.post_entry.set("Selecione...")
-        self.post_label = Label(self, text="Colaborador * ", bg='lightblue')
+        self.post_label = Label(self, fg='white', text="Colaborador * ", bg='#0d6282')
         self.post_label.pack()
         OptionMenu(self, self.post_entry, "Funcionário", "Nutricionista").pack()
-        Label(self, text="", bg='lightblue').pack()
+        Label(self, text="", bg='#0d6282').pack()
         Button(self, text="Registrar", width=10, height=1, bg="orange", command = self.register_user).pack()
         Button(self, text="Voltar", bg='white', width=10, height=1, command=lambda:master.backward()).place(x=winW-100,y=winH-100)
 
@@ -116,7 +118,7 @@ class RegisterPage(Win):
         post_info = self.post_entry.get()
         
         if (username_info == '' or password_info == '' or post_info == 'Selecione...'):
-            Label(self, text="Por favor, preencha todos os campos.", bg='lightblue', fg="red").pack()
+            Label(self, text="Por favor, preencha todos os campos.", bg='#0d6282', fg="white").pack()
             return
         mydb = mysql.connector.connect(
             host = l_host,
@@ -129,12 +131,12 @@ class RegisterPage(Win):
         user = cursor.fetchall() #lista info do usuario
 
         if len(user) != 0:
-            Label(self, text="Este nome de usuário já está cadastrado.", bg='lightblue').pack()
+            Label(self, text="Este nome de usuário já está cadastrado.", bg='#0d6282', fg='white').pack()
             return
             
         cursor = mydb.cursor()
         cursor.execute(f"INSERT INTO Users(Username, Password, Tipo) VALUES('{username_info}', '{password_info}', '{post_info}')")
-        Label(self, text="Registrado com sucesso.", fg='green', font=("Verdana", 12), bg='lightblue',).pack()
+        Label(self, text="Registrado com sucesso.", fg='orange', font=("Verdana", 12), bg='#0d6282',).pack()
         mydb.commit()
         mydb.close()
 
