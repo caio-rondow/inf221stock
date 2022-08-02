@@ -145,17 +145,20 @@ class RegisterPage(Win):
 class MenuFunc(Win):
     def __init__(self, master):
         super().__init__(master)
-        self.configure(bg='#C4A484')
+        bg ="misc/menufunc.png"
+        self.image=ImageTk.PhotoImage(Image.open(bg))
+        label=Label(self,image=self.image)
+        label.place(anchor='center', relx=0.5, rely=0.5)
         # LABELS
-        Label(self, text="MENU FUNCIONÁRIO", bg='#C4A484', font='Verdana').pack(side="top", fill="x", pady=10)
+        Label(self, text="MENU FUNCIONÁRIO", bg='#28e85e', font=('Verdana', 16, 'bold')).pack(side="top", fill="x", pady=10)
         
         # BOTÕES
-        button0=Button(self, text="Atualizar Porção",width=20,height=4,command=lambda:master.forward(AtualizaPorcao))
-        button1=Button(self, text="Pesquisar",width=20,height=4,command=lambda:master.forward(BuscaItemFunc))
-        button2=Button(self, text="Logout", fg='white', bg='red', width=10, height=1, command=lambda:master.backward()).place(x=winW-100,y=winH-100)
+        button0=Button(self, font='Arial', text="Atualizar Porção",width=20,height=4,command=lambda:master.forward(AtualizaPorcao))
+        button1=Button(self, font='Arial', text="Pesquisar",width=20,height=4,command=lambda:master.forward(BuscaItemFunc))
+        button2=Button(self, font='Arial', text="Logout", fg='white', bg='red', width=10, height=1, command=lambda:master.backward()).place(x=winW-130,y=winH-100)
         # --- Place Botões
-        button0.place(x=(winW//2)-200,y=winH-500)
-        button1.place(x=(winW//2)-200,y=winH-400)
+        button0.place(x=winW-700,y=winH-500)
+        button1.place(x=winW-700,y=winH-400)
 
 class AtualizaPorcao(Win): # MODIFICAR ESSE AQUI
     def __init__(self, master):
@@ -357,17 +360,20 @@ class AddItemForm(Win):
 class MenuNutri(Win):
     def __init__(self, master):
         super().__init__(master)
-        Label(self, text="MENU NUTRICIONISTA", bg='#C3B1E1', font='Verdana').pack(side="top")
-        self.configure(bg='#C3B1E1')
+        bg ="misc/menunutri.png"
+        self.image=ImageTk.PhotoImage(Image.open(bg))
+        label=Label(self,image=self.image)
+        label.place(anchor='center', relx=0.5, rely=0.5)
+        Label(self, text="MENU NUTRICIONISTA", bg='#b0a3c6', font=('Verdana', 16, 'bold')).pack(side="top", fill="x", pady=10)
         # BOTÕES
-        button0=Button(self,text="Tabela Nutricional",width=20,height=4,command=lambda:master.forward(GeraTabela))
-        button1=Button(self,text="Gerar Histórico",width=20,height=4,command=lambda:master.forward(GeraHistorico))
-        button2=Button(self,text="Gerar Cardápio",width=20,height=4,command=lambda:master.forward(GeraCardapio))
-        button3=Button(self, text="Logout", fg='white', bg='red', width=10, height=1, command=lambda:master.backward()).place(x=winW-100,y=winH-100)
+        button0=Button(self,font='Arial',text="Tabela Nutricional",width=20,height=4,command=lambda:master.forward(GeraTabela))
+        button1=Button(self,font='Arial',text="Gerar Histórico",width=20,height=4,command=lambda:master.forward(GeraHistorico))
+        button2=Button(self,font='Arial',text="Gerar Cardápio",width=20,height=4,command=lambda:master.forward(GeraCardapio))
+        button3=Button(self,font='Arial',text="Logout", fg='white', bg='red', width=10, height=1, command=lambda:master.backward()).place(x=winW-130,y=winH-100)
         # --- Place Botões
-        button0.place(x=(winW//2)-200,y=winH-500)
-        button1.place(x=(winW//2)-200,y=winH-400)
-        button2.place(x=(winW//2)-200,y=winH-300)
+        button0.place(x=winW-700,y=winH-500)
+        button1.place(x=winW-700,y=winH-400)
+        button2.place(x=winW-700,y=winH-300)
 
         # Create a Label Widget to display the text or Image
 
@@ -443,7 +449,7 @@ class GeraTabela(Win):
         itemlist.place(x=(winW//4)-180,y=winH-530)
         self.lbQuery.pack()
 
-    def on_double_click(self, event):
+    def on_double_click(self, event=None):
         item = self.lbQuery.selection()
         for i in item:
             ingrediente = self.lbQuery.item(i, "values")[0]
@@ -499,11 +505,6 @@ class GeraTabela(Win):
         conn.close()
 
         return query
-
-    def remove(self):
-        item=self.lbQuery.selection()
-        for i in item:
-            self.lbQuery.delete(i)
 
     def update(self,data):
         self.lbQuery.delete(*self.lbQuery.get_children())
