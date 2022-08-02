@@ -1,4 +1,5 @@
 from calendar import c
+from urllib import robotparser
 
 from hamcrest import none
 from src.include.winController import *
@@ -359,7 +360,7 @@ class MenuNutri(Win):
         Label(self, text="MENU NUTRICIONISTA", bg='#C3B1E1', font='Verdana').pack(side="top")
         self.configure(bg='#C3B1E1')
         # BOTÕES
-        button0=Button(self,text="Pesquisar",width=20,height=4,command=lambda:master.forward(BuscaItemNutri))
+        button0=Button(self,text="Tabela Nutricional",width=20,height=4,command=lambda:master.forward(GeraTabela))
         button1=Button(self,text="Gerar Histórico",width=20,height=4,command=lambda:master.forward(GeraHistorico))
         button2=Button(self,text="Gerar Cardápio",width=20,height=4,command=lambda:master.forward(GeraCardapio))
         button3=Button(self, text="Logout", fg='white', bg='red', width=10, height=1, command=lambda:master.backward()).place(x=winW-100,y=winH-100)
@@ -405,37 +406,128 @@ class GeraHistorico(Win):
 class GeraTabela(Win):
     def __init__(self, master):
         super().__init__(master)
-
-        tabela="misc/capi.jpg" # MUDAR PARA FUNÇÃO QUE GERA IMAGEM DO TABELA
-        self.image=ImageTk.PhotoImage(Image.open(tabela))
-
-        # LABEL
-        label=Label(self,image=self.image)
-        label.place(anchor='center', relx=0.5, rely=0.5)
-
-        # BOTÕES
-        button=Button(self, text="Voltar",command=lambda:master.backward())
-        # --- Place Botões
-        button.place(x=winW-100,y=winH-100)
-
-class BuscaItemNutri(Win):
-    def __init__(self, master):
-        super().__init__(master)
         
-        defaultText="sample_text"
+        self.defaultText=""
 
         # INPUT BARRA DE PESQUISA
-        searchBox=Entry(self,width=50, borderwidth=2)
-        searchBox.insert(0,defaultText)
-        searchBox.place(x=(winW//4)-190,y=20)
+        self.searchBox=Entry(self,width=50, borderwidth=2)
+        self.searchBox.place(x=(winW//4)-190,y=20)
 
         # BORDA
-        lframe=LabelFrame(self,text="itens",width=winW-150,height=winH-100)
+        lframe=LabelFrame(self,text="INGREDIENTES DISPONÍVEIS",width=winW-550,height=winH-100)
         lframe.place(x=(winW//4)-190,y=winH-550)
 
         # BOTÕES
-        button0=Button(self, text="Buscar",width=8,height=1)  # Adicionar função de buscar item no BD
+        button0=Button(self, text="Buscar",width=8,height=1,command=lambda:self.search(self.searchBox))  
         button1=Button(self, text="Voltar",command=lambda:master.backward())
         # --- Place Botões
         button0.place(x=(winW//2)-80,y=15)
         button1.place(x=winW-100,y=winH-100)
+
+        # LIST BOX
+        itemlist=Frame(self)
+        scrollbar=Scrollbar(itemlist,orient=VERTICAL)
+        self.lbQuery=Treeview(itemlist,column=('c1'),show='headings', height=22, yscrollcommand=scrollbar.set)
+        self.myquery=self.query()
+
+        # LIST BOX HEADINGS
+        self.lbQuery.column("# 1",anchor=CENTER)
+        self.lbQuery.heading('# 1', text='Ingrediente')
+
+        # insert into list of itens
+        self.update(self.myquery)
+        self.lbQuery.bind("<Double-1>", self.on_double_click)
+        # --- place listbox
+        scrollbar.config(command=self.lbQuery.yview)
+        scrollbar.pack(side=RIGHT,fill=Y)
+        itemlist.place(x=(winW//4)-180,y=winH-530)
+        self.lbQuery.pack()
+
+    def on_double_click(self, event):
+        item = self.lbQuery.selection()
+        for i in item:
+            ingrediente = self.lbQuery.item(i, "values")[0]
+        root = Tk()
+        root.resizable(False, False)
+        root.iconbitmap(r"misc/favicon.ico")
+        root.title(ingrediente)
+        mydb=mysql.connector.connect(
+            host = l_host,
+            user = l_user,
+            password = l_pass,
+            database = l_db
+        )
+        cursor = mydb.cursor()
+        cursor.execute(f"SELECT TamanhoPorcao, ValorEnergético, Carboidratos, Proteínas, GordurasTotais, GordurasSaturadas, GordurasTrans, FibraAlimentar, Sódio FROM INFONUTRICIONAL WHERE Ingrediente='{ingrediente}';")
+        tabela = cursor.fetchall()
+        lst = [('Porção', str(tabela[0][0])+' g'),
+            ('Valor Energético', str(tabela[0][1])+' kcal'),
+            ('Carboidratos', str(tabela[0][2])+' g'),
+            ('Proteínas', str(tabela[0][3])+' g'),
+            ('Gorduras Totais', str(tabela[0][4])+' g'),
+            ('Gorduras Saturadas', str(tabela[0][5])+' g'),
+            ('Gorduras Trans', str(tabela[0][6])+' g'),
+            ('Fibra Alimentar', str(tabela[0][7])+' g'),
+            ('Sódio', str(tabela[0][8])+' mg')]
+
+        total_rows = len(lst)
+        total_columns = len(lst[0])
+
+        for i in range(total_rows):
+            for j in range(total_columns):
+                 
+                self.e = Entry(root, width=20, fg='black',
+                               font=('Arial',16,'bold'))
+                 
+                self.e.grid(row=i, column=j)
+                self.e.insert(END, lst[i][j])
+
+    def query(self):
+        # Create/Connect to database
+        conn=mysql.connector.connect(
+            host = l_host,
+            user = l_user,
+            password = l_pass,
+            database = l_db
+        )
+        cursor=conn.cursor()
+    
+        cursor.execute("select ingrediente from infonutricional")
+        query=cursor.fetchall()
+
+        conn.commit()
+        conn.close()
+
+        return query
+
+    def remove(self):
+        item=self.lbQuery.selection()
+        for i in item:
+            self.lbQuery.delete(i)
+
+    def update(self,data):
+        self.lbQuery.delete(*self.lbQuery.get_children())
+        for item in data:
+            self.lbQuery.insert('','end',values=item)
+
+    def search(self,data):
+        item='%'+data.get()+'%'
+        
+        # Create/Connect to database
+        conn=mysql.connector.connect(
+            host = l_host,
+            user = l_user,
+            password = l_pass,
+            database = l_db
+        )
+        cursor=conn.cursor()
+        command="select ingrediente from infonutricional where Ingrediente like %s"
+        values=(item,)
+        cursor.execute(command,values)
+        query=cursor.fetchall()
+
+        self.update(query)
+        self.lbQuery.pack()
+
+        conn.commit()
+        conn.close()
