@@ -11,6 +11,10 @@ import os
 from PIL import ImageTk, Image
 from tkinter.ttk import Treeview
 
+import matplotlib.pyplot as plt
+from matplotlib.collections import EventCollection
+import numpy as np
+
 # ========== DEFAULT WINDOW ==========
 winW=800
 winH=600
@@ -19,7 +23,7 @@ background="#5A5A5A"
 # ========= DB CONFIG ==============
 l_host = "localhost"
 l_user = "root"
-l_pass = "aspl5423"
+l_pass = "@RoneCachaca2222@"
 l_db = "db"
 
 class Win(Frame):
@@ -177,7 +181,7 @@ class BuscaItemFunc(Win):
     def __init__(self, master):
         super().__init__(master)
         
-        self.defaultText="sample_text"
+        self.defaultText=""
 
         # INPUT BARRA DE PESQUISA
         searchBox=Entry(self,width=50, borderwidth=2)
@@ -381,23 +385,132 @@ class GeraCardapio(Win):
     def __init__(self, master):
         super().__init__(master)
 
-        cardapio="misc/capi.jpg" # MUDAR PARA FUNÇÃO QUE GERA IMAGEM DO CARDÁPIO
-        self.image=ImageTk.PhotoImage(Image.open(cardapio))
+        # GET DATA
+        self.data=[(100,'carboidrato'), (20, 'Proteina'), (5, 'Fibra'), (50,'gordura')]
+        
+        # GENERATE PIE GRAPH
+        self.pieplot(self.data)
 
+        # LOAD IMAGE
+        cardapio="misc/pie.png"
+        im=Image.open(cardapio)
+
+        # CROP IMAGE
+        frac = 0.70
+        left = im.size[0]*((1-frac)/2)
+        upper = im.size[1]*((1-frac)/64)
+        right = im.size[0]-((1-frac)/8)*im.size[0]
+        bottom = im.size[1]-((1-frac)/2)*im.size[1]
+        im_cropped = im.crop((left,upper,right,bottom))
+        self.image=ImageTk.PhotoImage(im_cropped)
+        
+        # FRAMES
+        pieFrame=Frame(self).place(x=0, y=0)
+
+        # BORDA
+        lframe1=LabelFrame(self,text="ALMOÇO",width=winW-20,height=winH//4)
+        lframe2=LabelFrame(self,text="JANTAR",width=winW-20,height=winH//4)
+        # --- Place Label Frame
+        lframe1.place(x=10, y=10)
+        lframe2.place(x=10, y=10+(winH//4))
+        
         # LABEL
-        label=Label(self,image=self.image)
-        label.place(anchor='center', relx=0.5, rely=0.5)
-
+        label1=Label(pieFrame,image=self.image)
+        # --- Place Label
+        label1.place(x=(winW//2)-250, y=(winH//2)+20)
+        
         # BOTÕES
-        button=Button(self, text="Voltar",command=lambda:master.backward())
+        button=Button(self, text="Voltar",command=lambda:self.backward(label1))
         # --- Place Botões
         button.place(x=winW-100,y=winH-100)
+        
+        # LIST BOX
+        self.lbQuery1=Treeview(self,column=('c1','c2','c3','c4','c5'),show='headings',height=4)
+        self.lbQuery2=Treeview(self,column=('c1','c2','c3','c4','c5'),show='headings',height=4)
+        #self.myquery=self.query() 
+        # TROCAR POR FUNÇÃO QUE PEGA OS VALORES DO BANCO DE DADOS !!!!!!!!!!!!!!!
+        self.myquery1=['Arroz Feijão Cenoura Frango Alface']
+        self.myquery2=['Arroz Feijão Beterraba Almondega Repolho']
+        
+        # LIST BOX HEADINGS
+        lbox_w=150
+        self.lbQuery1.column("# 1",anchor=CENTER, width=lbox_w)
+        self.lbQuery1.heading('# 1', text='Acompanhamento 1')
+        self.lbQuery1.column("# 2",anchor=CENTER, width=lbox_w)
+        self.lbQuery1.heading('# 2', text='Acompanhamento 2')
+        self.lbQuery1.column("# 3",anchor=CENTER, width=lbox_w)
+        self.lbQuery1.heading('# 3', text='Guarnição')
+        self.lbQuery1.column("# 4",anchor=CENTER, width=lbox_w)
+        self.lbQuery1.heading('# 4', text='Prato Principal')
+        self.lbQuery1.column("# 5",anchor=CENTER, width=lbox_w)
+        self.lbQuery1.heading('# 5', text='Salada')
+
+        self.lbQuery2.column("# 1",anchor=CENTER, width=lbox_w)
+        self.lbQuery2.heading('# 1', text='Acompanhamento 1')
+        self.lbQuery2.column("# 2",anchor=CENTER, width=lbox_w)
+        self.lbQuery2.heading('# 2', text='Acompanhamento 2')
+        self.lbQuery2.column("# 3",anchor=CENTER, width=lbox_w)
+        self.lbQuery2.heading('# 3', text='Guarnição')
+        self.lbQuery2.column("# 4",anchor=CENTER, width=lbox_w)
+        self.lbQuery2.heading('# 4', text='Prato Principal')
+        self.lbQuery2.column("# 5",anchor=CENTER, width=lbox_w)
+        self.lbQuery2.heading('# 5', text='Salada')
+
+
+        # insert into list of itens
+        self.update(self.myquery1, self.lbQuery1)
+        self.update(self.myquery2, self.lbQuery2)
+
+        # --- place listbox
+        self.lbQuery1.place(x=20,y=40)
+        self.lbQuery2.place(x=20,y=190)
+
+    def backward(self,label):
+        label.destroy()
+        self.master.backward()
+
+    def update(self,data,lbQuery):
+        lbQuery.delete(*lbQuery.get_children())
+        for item in data:
+            lbQuery.insert('','end',values=item)
+
+    def pieplot(self,pack): 
+
+        fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
+
+        data=[]
+        type_=[]
+        for i in range(len(pack)):
+            data.append( pack[i][0] )
+            type_.append( pack[i][1] )
+
+        def func(pct, allvals):
+            absolute = int(np.round(pct/100.*np.sum(allvals)))
+            return "{:.1f}%".format(pct, absolute)
+
+        wedges, texts, autotexts = ax.pie(data, autopct=lambda pct: func(pct, data),
+                                            textprops=dict(color="w"))
+        ax.legend(wedges, type_,
+                    title="Tipo do alimento",
+                    loc="center left",
+                    bbox_to_anchor=(1, 0, 0.5, 1))
+        plt.setp(autotexts, size=8, weight="bold")
+        ax.set_title("Informação Nutricional do Cardápio")
+        fig.savefig('misc/pie.png')
 
 class GeraHistorico(Win):
     def __init__(self, master):
         super().__init__(master)
 
-        historico="misc/capi.jpg" # MUDAR PARA FUNÇÃO QUE GERA IMAGEM DO HISTÓRICO
+        # Graph atributtes
+        self.data=[]
+        self.name=[]
+        self.color=[]
+        self.linestyle=[]
+        self.title='Histórico Nutricional'
+        
+        self.create_hist()
+        historico="misc/historico.png" 
         self.image=ImageTk.PhotoImage(Image.open(historico))
 
         # LABEL
@@ -408,6 +521,58 @@ class GeraHistorico(Win):
         button=Button(self, text="Voltar",command=lambda:master.backward())
         # --- Place Botões
         button.place(x=winW-100,y=winH-100)
+
+
+    def create_hist(self):
+
+        # # Create/Connect to database
+        # conn=mysql.connector.connect(
+        #     host = l_host,
+        #     user = l_user,
+        #     password = l_pass,
+        #     database = l_db
+        # )
+
+        # cursor=conn.cursor()
+        # command="select * from historico where data between date_sub(now(), INTERVAL 1 WEEK) and now()"
+        # cursor.execute(command)
+        # query=cursor.fetchall()
+        
+
+        # conn.commit()
+        # conn.close()
+
+        xprot,yprot=([0,1,2],[2,3,6])
+        xcarb,ycarb=([0,1,2],[10,40,90])
+        xfibra,yfibra=([0,1,2],[100,200,300])
+        fig_sz=5
+
+        self.data=[(xprot,yprot), (xcarb,ycarb), (xfibra,yfibra)]
+        self.name=['proteina', 'carboidrato', 'fibra']
+        self.linestyle=['dashed', 'dotted', 'solid']
+        self.color=['blue','red','green']
+
+        # plot the data
+        fig = plt.figure(figsize=(fig_sz,fig_sz))
+        ax = fig.add_subplot(1, 1, 1)
+
+        for i in range(len(self.data)):
+            x,y=self.data[i][0], self.data[i][1]
+
+            ax.plot(
+                x,y,
+                color='tab:'+self.color[i], 
+                linewidth=5, 
+                linestyle=self.linestyle[i],
+                label=self.name[i]
+            )
+        
+        ax.set_title(self.title)
+        ax.legend()
+
+        # save fig
+        fig.savefig('misc/historico.png', format='png')
+    
 
 class GeraTabela(Win):
     def __init__(self, master):
